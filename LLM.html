@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Pipeline for Client Questionnaire Automation - Delta Capita</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            overflow-y: auto; /* Allow scrolling only when needed */
+        }
+        
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        
+        .floating-particles {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .neural-network {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(34, 197, 94, 0.1) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.2; }
+        }
+        
+        /* Glass morphism effects */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stage-container {
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* Stage styling */
+.stage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100vh;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+    padding: 4rem 1rem;
+}
+
+/* Active stage */
+.stage.active {
+    opacity: 1;
+    visibility: visible;
+    z-index: 1;
+}
+stage {
+    /* Removed transform: translateX(50px) */
+    display: block; /* Always block, controlled by visibility */
+}
+        
+        /* Progress indicator */
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-fill {
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 0.8s ease-in-out;
+        }
+        
+        /* Button animations */
+        .btn-modern {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-modern:hover::before {
+            left: 100%;
+        }
+        
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        
+        /* Typewriter effect */
+        .typewriter {
+            overflow: hidden;
+            border-right: 3px solid #3b82f6;
+            white-space: nowrap;
+            margin: 0 auto;
+            animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #3b82f6; }
+        }
+        
+        /* Token visualization */
+        .token {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            margin: 0.25rem;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 20px;
+            color: white;
+            font-size: 0.8rem;
+            transform: scale(0);
+            animation: tokenPop 0.5s ease forwards;
+        }
+        
+        @keyframes tokenPop {
+            0% { transform: scale(0) rotate(180deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        /* Vector visualization */
+        .vector-space {
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1), transparent);
+            border-radius: 50%;
+            position: relative;
+        }
+        
+        .vector-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: vectorPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes vectorPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.7; }
+        }
+        
+        /* Navigation */
+        .nav-pill {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-pill.active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            transform: scale(1.05);
+        }
+        
+        .nav-pill:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Metrics cards */
+        .metric-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        
+        /* Loading animations */
+        .loading-wave {
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: #3b82f6;
+            margin: 0 2px;
+            animation: wave 1s infinite ease-in-out;
+        }
+        
+        .loading-wave:nth-child(2) { animation-delay: 0.1s; }
+        .loading-wave:nth-child(3) { animation-delay: 0.2s; }
+        .loading-wave:nth-child(4) { animation-delay: 0.3s; }
+        
+        @keyframes wave {
+            0%, 40%, 100% { transform: scaleY(0.4); }
+            20% { transform: scaleY(1); }
+        }
+        
+        /* Query input styling */
+        .query-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .query-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            outline: none;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .stage { padding: 1rem; }
+            .typewriter { font-size: 1.5rem; }
+        }
+        
+        /* Data flow animation */
+        .data-flow {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .data-flow::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            animation: dataFlow 2s linear infinite;
+        }
+        
+        @keyframes dataFlow {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        /* Glow effects */
+        .glow {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="neural-network"></div>
+    </div>
+
+    <!-- Navigation Header -->
+    <nav class="fixed top-0 left-0 right-0 z-50 p-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="glass rounded-full px-6 py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <i class="fas fa-brain text-white text-sm"></i>
+                    </div>
+                    <span class="text-white font-semibold">Delta Capita AI</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-2" id="stageNav">
+                    <!-- Navigation pills will be generated here -->
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-white text-sm">
+                        Stage <span id="currentStage">0</span>/7
+                    </div>
+                    <svg class="w-8 h-8" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.2)" stroke-width="8" fill="none"/>
+                        <circle cx="50" cy="50" r="40" stroke="#3b82f6" stroke-width="8" fill="none" 
+                                class="progress-ring-fill" id="progressRing"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div id="intro" class="min-h-screen flex items-center justify-center px-4 pt-20">
+        <div class="text-center max-w-5xl mx-auto">
+            <div class="mb-8">
+                <h1 class="text-6xl md:text-8xl font-bold text-white mb-6 glow-text">
+                    <span class="typewriter">LLM Pipeline</span>
+                </h1>
+                <div class="text-2xl md:text-3xl text-blue-300 mb-4">
+                    Client Questionnaire Automation
+                </div>
+                <div class="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                    Explore the revolutionary stages of our Language Model designed for Delta Capita's 
+                    automated client questionnaire system. Journey through data collection to intelligent 
+                    response generation with cutting-edge AI technology.
+                </div>
+            </div>
+            
+            <!-- Feature Highlights -->
+            <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <div class="glass rounded-xl p-6 metric-card">
+                    <div class="text-3xl mb-3">⚡</div>
+                    <div class="text-white font-semibold mb-2">80% Faster</div>
+                    <div class="text-gray-300 text-sm">Response Generation</div>
+                </div>
+                <div class="glass rounded-xl p-6 metric-card">
+                    <div class="text-3xl mb-3">🎯</div>
+                    <div class="text-white font-semibold mb-2">95% Accuracy</div>
+                    <div class="text-gray-300 text-sm">Document Retrieval</div>
+                </div>
+                <div class="glass rounded-xl p-6 metric-card">
+                    <div class="text-3xl mb-3">💰</div>
+                    <div class="text-white font-semibold mb-2">60% Cost</div>
+                    <div class="text-gray-300 text-sm">Reduction</div>
+                </div>
+            </div>
+
+            <button onclick="startJourney()" 
+                    class="btn-modern bg-gradient-to-r from-blue-600 to-purple-600 text-white px-12 py-4 rounded-full text-lg font-semibold glow">
+                <i class="fas fa-rocket mr-3"></i>Begin the Journey
+            </button>
+        </div>
+    </div>
+
+    <!-- Stage 1: Data Collection -->
+    <div id="stage1" class="stage min-h-screen flex items-center justify-center px-4 py-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 mb-6">
+                    <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-database text-white text-sm"></i>
+                    </div>
+                    <span class="text-white font-semibold">Stage 1: Data Collection</span>
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Building the Knowledge Foundation</h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    We gather comprehensive documentation including policies, procedures, compliance reports, 
+                    and security certificates to create a robust knowledge repository.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-file-alt text-blue-400 mr-3"></i>Document Types
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3 p-3 glass-dark rounded-lg" data-document="policies">
+                            <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-shield-alt text-white"></i>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">Security Policies</div>
+                                <div class="text-gray-400 text-sm">Compliance frameworks & procedures</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 glass-dark rounded-lg" data-document="reports">
+                            <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chart-line text-white"></i>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">DR Test Reports</div>
+                                <div class="text-gray-400 text-sm">Disaster recovery assessments</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 glass-dark rounded-lg" data-document="certificates">
+                            <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-certificate text-white"></i>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">SOC Certificates</div>
+                                <div class="text-gray-400 text-sm">Security compliance validations</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-search text-purple-400 mr-3"></i>Try a Query
+                    </h3>
+                    <div class="space-y-4">
+                        <input type="text" id="queryInput" 
+                               class="query-input w-full p-4 text-white rounded-xl placeholder-gray-400" 
+                               placeholder="What is your latest DR test report?">
+                        <div class="flex space-x-3">
+                            
+                            <button onclick="showSampleQueries()" 
+                                    class="btn-modern glass text-white px-6 py-3 rounded-lg">
+                                <i class="fas fa-lightbulb mr-2"></i>Samples
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Sample Queries -->
+                    <div id="sampleQueries" class="hidden mt-4 space-y-2">
+                        <div class="text-gray-300 text-sm mb-2">Try these sample queries:</div>
+                        <button onclick="setQuery('What is your data backup policy?')" 
+                                class="block w-full text-left p-2 glass-dark rounded text-gray-300 hover:text-white text-sm">
+                            What is your data backup policy?
+                        </button>
+                        <button onclick="setQuery('Show me the latest penetration test results')" 
+                                class="block w-full text-left p-2 glass-dark rounded text-gray-300 hover:text-white text-sm">
+                            Show me the latest penetration test results
+                        </button>
+                        <button onclick="setQuery('What are your security compliance certifications?')" 
+                                class="block w-full text-left p-2 glass-dark rounded text-gray-300 hover:text-white text-sm">
+                            What are your security compliance certifications?
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between items-center">
+                <button onclick="showIntro()" 
+                        class="btn-modern glass text-white px-8 py-3 rounded-lg">
+                    <i class="fas fa-home mr-2"></i>Home
+                </button>
+                <button onclick="showStage(2)" 
+                        class="btn-modern bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-3 rounded-lg">
+                    Next: Preprocessing <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage 2: Data Preprocessing -->
+    <div id="stage2" class="stage min-h-screen flex items-center justify-center px-4 py-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 mb-6">
+                    <div class="w-8 h-8 bg-gradient-to-r from-yellow-500 to-green-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-filter text-white text-sm"></i>
+                    </div>
+                    <span class="text-white font-semibold">Stage 2: Data Preprocessing</span>
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Cleaning & Structuring Data</h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    Raw documents are cleaned, normalized, and structured with metadata tags 
+                    for optimal retrieval and processing efficiency.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-400 mr-3"></i>Before Preprocessing
+                    </h3>
+                    <div class="glass-dark rounded-lg p-4 font-mono text-sm">
+                        <div class="text-red-300">Raw Document Content:</div>
+                        <div class="text-gray-300 mt-2" id="rawText">
+                            [Loading raw document...]
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-check-circle text-green-400 mr-3"></i>After Preprocessing
+                    </h3>
+                    <div class="glass-dark rounded-lg p-4 font-mono text-sm">
+                        <div class="text-green-300">Cleaned & Structured:</div>
+                        <div class="text-gray-300 mt-2" id="cleanedText">
+                            [Processing...]
+                        </div>
+                    </div>
+                    
+                    <!-- Processing Animation -->
+                    <div id="processingAnimation" class="flex justify-center mt-6">
+                        <div class="loading-wave"></div>
+                        <div class="loading-wave"></div>
+                        <div class="loading-wave"></div>
+                        <div class="loading-wave"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metadata Tags Visualization -->
+            <div class="glass rounded-2xl p-8 mb-12">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-tags text-blue-400 mr-3"></i>Metadata Extraction
+                </h3>
+                <div id="metadataTags" class="flex flex-wrap gap-3">
+                    <!-- Tags will be generated here -->
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between items-center">
+                <button onclick="showStage(1)" 
+                        class="btn-modern glass text-white px-8 py-3 rounded-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>Back
+                </button>
+                <button onclick="showStage(3)" 
+                        class="btn-modern bg-gradient-to-r from-yellow-600 to-red-600 text-white px-8 py-3 rounded-lg">
+                    Next: Tokenization <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage 3: Tokenization -->
+    <div id="stage3" class="stage min-h-screen flex items-center justify-center px-4 py-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 mb-6">
+                    <div class="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-puzzle-piece text-white text-sm"></i>
+                    </div>
+                    <span class="text-white font-semibold">Stage 3: Tokenization</span>
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Breaking Down into Tokens</h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    Text is intelligently split into meaningful units (tokens) that the AI model 
+                    can understand and process for semantic analysis.
+                </p>
+            </div>
+
+            <div class="glass rounded-2xl p-8 mb-12">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-cut text-red-400 mr-3"></i>Query Tokenization
+                </h3>
+                
+                <div class="mb-6">
+                    <div class="text-lg text-gray-300 mb-4">Original Query:</div>
+                    <div class="glass-dark rounded-lg p-4 text-white font-mono" id="originalQuery">
+                        What is your latest DR test report?
+                    </div>
+                </div>
+
+                <div>
+                    <div class="text-lg text-gray-300 mb-4">Tokenized Output:</div>
+                    <div class="glass-dark rounded-lg p-6" id="tokenContainer">
+                        <!-- Tokens will be animated here -->
+                    </div>
+                </div>
+
+                <div class="mt-8 grid md:grid-cols-3 gap-4">
+                    <div class="glass-dark rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-blue-400" id="tokenCount">0</div>
+                        <div class="text-gray-300 text-sm">Total Tokens</div>
+                    </div>
+                    <div class="glass-dark rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-green-400" id="uniqueTokens">0</div>
+                        <div class="text-gray-300 text-sm">Unique Tokens</div>
+                    </div>
+                    <div class="glass-dark rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-purple-400" id="avgTokenLength">0</div>
+                        <div class="text-gray-300 text-sm">Avg Length</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between items-center">
+                <button onclick="showStage(2)" 
+                        class="btn-modern glass text-white px-8 py-3 rounded-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>Back
+                </button>
+                <button onclick="showStage(4)" 
+                        class="btn-modern bg-gradient-to-r from-red-600 to-purple-600 text-white px-8 py-3 rounded-lg">
+                    Next: Vectorization <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage 4: Vectorization -->
+    <div id="stage4" class="stage min-h-screen flex items-center justify-center px-4 py-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 mb-6">
+                    <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-vector-square text-white text-sm"></i>
+                    </div>
+                    <span class="text-white font-semibold">Stage 4: Vectorization</span>
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Converting to Vector Space</h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    Tokens are transformed into high-dimensional numerical vectors that capture 
+                    semantic meaning and enable similarity calculations.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-cube text-purple-400 mr-3"></i>Vector Representation
+                    </h3>
+                    <div class="vector-space h-64 relative border border-purple-500/30 rounded-lg mb-6" id="vectorSpace">
+                        <!-- Vector points will be plotted here -->
+                    </div>
+                    <div class="text-sm text-gray-300 text-center">
+                        Each point represents a token in high-dimensional space
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-calculator text-indigo-400 mr-3"></i>Vector Mathematics
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="glass-dark rounded-lg p-4">
+                            <div class="text-green-300 font-mono text-sm mb-2">Query Vector:</div>
+                            <div class="text-gray-300 font-mono text-xs" id="queryVector">
+                                [0.234, -0.567, 0.891, 0.123, -0.445, ...]
+                            </div>
+                        </div>
+                        <div class="glass-dark rounded-lg p-4">
+                            <div class="text-blue-300 font-mono text-sm mb-2">Document Vector:</div>
+                            <div class="text-gray-300 font-mono text-xs" id="docVector">
+                                [0.198, -0.523, 0.834, 0.156, -0.398, ...]
+                            </div>
+                        </div>
+                        <div class="glass-dark rounded-lg p-4">
+                            <div class="text-purple-300 font-mono text-sm mb-2">Similarity Score:</div>
+                            <div class="flex items-center space-x-3">
+                                <div class="text-2xl font-bold text-white" id="similarityScore">0.87</div>
+                                <div class="flex-1 bg-gray-700 rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-1000" 
+                                         style="width: 87%" id="similarityBar"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between items-center">
+                <button onclick="showStage(3)" 
+                        class="btn-modern glass text-white px-8 py-3 rounded-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>Back
+                </button>
+                <button onclick="showStage(5)" 
+                        class="btn-modern bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg">
+                    Next: RAG Retrieval <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage 5: RAG Retrieval -->
+    <div id="stage5" class="stage min-h-screen flex items-center justify-center px-4 py-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 mb-6">
+                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-search-plus text-white text-sm"></i>
+                    </div>
+                    <span class="text-white font-semibold">Stage 5: RAG Retrieval</span>
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Intelligent Document Retrieval</h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    Retrieval-Augmented Generation finds the most relevant documents from our knowledge base 
+                    using semantic similarity to provide accurate, contextual responses.
+                </p>
+            </div>
+
+            
+
+            <!-- Retrieval Process -->
+            <div class="glass rounded-2xl p-8 mb-12">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-radar text-blue-400 mr-3"></i>Document Search Process
+                </h3>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-search text-white text-2xl"></i>
+                        </div>
+                        <div class="text-white font-semibold mb-2">Query Processing</div>
+                        <div class="text-gray-300 text-sm">Vector embedding of user query</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-crosshairs text-white text-2xl"></i>
+                        </div>
+                        <div class="text-white font-semibold mb-2">Similarity Matching</div>
+                        <div class="text-gray-300 text-sm">Finding closest document vectors</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-trophy text-white text-2xl"></i>
+                        </div>
+                        <div class="text-white font-semibold mb-2">Top Results</div>
+                        <div class="text-gray-300 text-sm">Ranking by relevance score</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Retrieved Documents -->
+            <div class="glass rounded-2xl p-8 mb-12">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-list-ol text-green-400 mr-3"></i>Retrieved Documents
+                </h3>
+                <div class="space-y-4" id="retrievedDocs">
+                    <!-- Documents will be populated here -->
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between items-center">
+                <button onclick="showStage(4)" 
+                        class="btn-modern glass text-white px-8 py-3 rounded-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>Back
+                </button>
+                <button onclick="showStage(6)" 
+                        class="btn-modern bg-gradient-to-r from-blue-600 to-green-600 text-white px-8 py-3 rounded-lg">
+                    Next: Response Generation <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage 6: Response Generation -->
+    <div id="stage6" class="stage min-h-screen flex items-center justify-center px-4 py-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 mb-6">
+                    <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-pen-fancy text-white text-sm"></i>
+                    </div>
+                    <span class="text-white font-semibold">Stage 6: Response Generation</span>
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Crafting Intelligent Responses</h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    The AI synthesizes retrieved information with the query context to generate 
+                    professional, accurate, and contextually appropriate responses.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-cogs text-green-400 mr-3"></i>Generation Process
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3 p-3 glass-dark rounded-lg">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">1</span>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">Context Assembly</div>
+                                <div class="text-gray-400 text-sm">Combining query + retrieved docs</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 glass-dark rounded-lg">
+                            <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">2</span>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">Prompt Engineering</div>
+                                <div class="text-gray-400 text-sm">Structuring input for optimal output</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 glass-dark rounded-lg">
+                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">3</span>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">LLM Generation</div>
+                                <div class="text-gray-400 text-sm">Creating coherent response</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 glass-dark rounded-lg">
+                            <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">4</span>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">Quality Check</div>
+                                <div class="text-gray-400 text-sm">Validation & formatting</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-comment-alt text-teal-400 mr-3"></i>Generated Response
+                    </h3>
+                    <div class="glass-dark rounded-lg p-6">
+                        <div class="text-green-300 text-sm mb-3">AI Response:</div>
+                        <div class="text-white leading-relaxed" id="generatedResponse">
+                            <div class="typewriter-response"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Response Quality Metrics -->
+                    <div class="mt-6 grid grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-400">98%</div>
+                            <div class="text-gray-300 text-xs">Accuracy</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-400">0.8s</div>
+                            <div class="text-gray-300 text-xs">Response Time</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-purple-400">95%</div>
+                            <div class="text-gray-300 text-xs">Confidence</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response Features -->
+            <div class="glass rounded-2xl p-8 mb-12">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-star text-yellow-400 mr-3"></i>Response Features
+                </h3>
+                <div class="grid md:grid-cols-4 gap-6">
+                    <div class="text-center p-4 glass-dark rounded-xl">
+                        <div class="text-3xl mb-3">🎯</div>
+                        <div class="text-white font-semibold mb-2">Contextual</div>
+                        <div class="text-gray-300 text-sm">Based on relevant documents</div>
+                    </div>
+                    <div class="text-center p-4 glass-dark rounded-xl">
+                        <div class="text-3xl mb-3">💼</div>
+                        <div class="text-white font-semibold mb-2">Professional</div>
+                        <div class="text-gray-300 text-sm">Business-appropriate tone</div>
+                    </div>
+                    <div class="text-center p-4 glass-dark rounded-xl">
+                        <div class="text-3xl mb-3">✅</div>
+                        <div class="text-white font-semibold mb-2">Accurate</div>
+                        <div class="text-gray-300 text-sm">Fact-checked information</div>
+                    </div>
+                    <div class="text-center p-4 glass-dark rounded-xl">
+                        <div class="text-3xl mb-3">🔄</div>
+                        <div class="text-white font-semibold mb-2">Consistent</div>
+                        <div class="text-gray-300 text-sm">Standardized formatting</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between items-center">
+                <button onclick="showStage(5)" 
+                        class="btn-modern glass text-white px-8 py-3 rounded-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>Back
+                </button>
+                <button onclick="showStage(7)" 
+                        class="btn-modern bg-gradient-to-r from-green-600 to-yellow-600 text-white px-8 py-3 rounded-lg">
+                    Next: Optimization <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage 7: Model Optimization -->
+    <div id="stage7" class="stage min-h-screen flex items-center justify-center px-4 py-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 mb-6">
+                    <div class="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-rocket text-white text-sm"></i>
+                    </div>
+                    <span class="text-white font-semibold">Stage 7: Model Optimization</span>
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Continuous Improvement</h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    Fine-tune performance through advanced optimization techniques, feedback loops, 
+                    and continuous monitoring to achieve maximum efficiency and accuracy.
+                </p>
+            </div>
+
+            <!-- Performance Dashboard -->
+            <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <div class="glass rounded-2xl p-6 metric-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-500 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-chart-line text-white text-xl"></i>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-white">92%</div>
+                            <div class="text-green-400 text-sm">↗ +5%</div>
+                        </div>
+                    </div>
+                    <div class="text-white font-semibold">Response Accuracy</div>
+                    <div class="text-gray-300 text-sm">Average across all queries</div>
+                </div>
+
+                <div class="glass rounded-2xl p-6 metric-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-clock text-white text-xl"></i>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-white">1.2s</div>
+                            <div class="text-green-400 text-sm">↗ -0.3s</div>
+                        </div>
+                    </div>
+                    <div class="text-white font-semibold">Avg Response Time</div>
+                    <div class="text-gray-300 text-sm">Including retrieval & generation</div>
+                </div>
+
+                <div class="glass rounded-2xl p-6 metric-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-users text-white text-xl"></i>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-white">89%</div>
+                            <div class="text-green-400 text-sm">↗ +12%</div>
+                        </div>
+                    </div>
+                    <div class="text-white font-semibold">User Satisfaction</div>
+                    <div class="text-gray-300 text-sm">Based on feedback ratings</div>
+                </div>
+            </div>
+
+            <!-- Optimization Techniques -->
+            <div class="glass rounded-2xl p-8 mb-12">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-tools text-orange-400 mr-3"></i>Optimization Strategies
+                </h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <div class="glass-dark rounded-lg p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-cut text-white text-sm"></i>
+                                </div>
+                                <div class="text-white font-semibold">Document Chunking</div>
+                            </div>
+                            <div class="text-gray-300 text-sm">
+                                Optimized text segmentation for better retrieval accuracy
+                            </div>
+                        </div>
+                        <div class="glass-dark rounded-lg p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-tags text-white text-sm"></i>
+                                </div>
+                                <div class="text-white font-semibold">Metadata Enhancement</div>
+                            </div>
+                            <div class="text-gray-300 text-sm">
+                                Rich tagging system for improved document discovery
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="glass-dark rounded-lg p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-magic text-white text-sm"></i>
+                                </div>
+                                <div class="text-white font-semibold">Prompt Engineering</div>
+                            </div>
+                            <div class="text-gray-300 text-sm">
+                                Refined prompts for consistent, high-quality responses
+                            </div>
+                        </div>
+                        <div class="glass-dark rounded-lg p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-sync-alt text-white text-sm"></i>
+                                </div>
+                                <div class="text-white font-semibold">Feedback Loop</div>
+                            </div>
+                            <div class="text-gray-300 text-sm">
+                                Continuous learning from user interactions and corrections
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PoC Outcomes -->
+            <div class="glass rounded-2xl p-8 mb-12">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-trophy text-yellow-400 mr-3"></i>PoC Success Metrics
+                </h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="text-xl font-semibold text-white mb-4">Achieved Results</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check text-white text-xs"></i>
+                                </div>
+                                <div class="text-gray-300">80% reduction in response time</div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check text-white text-xs"></i>
+                                </div>
+                                <div class="text-gray-300">95% accuracy in document retrieval</div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check text-white text-xs"></i>
+                                </div>
+                                <div class="text-gray-300">60% cost reduction in manual effort</div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check text-white text-xs"></i>
+                                </div>
+                                <div class="text-gray-300">Consistent response quality</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-semibold text-white mb-4">Future Scaling</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-arrow-right text-white text-xs"></i>
+                                </div>
+                                <div class="text-gray-300">Extend to SRP product line</div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-arrow-right text-white text-xs"></i>
+                                </div>
+                                <div class="text-gray-300">Multi-language support</div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-arrow-right text-white text-xs"></i>
+                                </div>
+                                <div class="text-gray-300">Advanced analytics dashboard</div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-arrow-right text-white text-xs"></i>
+                                </div>
+                                <div class="text-gray-300">Integration with existing systems</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between items-center">
+                <button onclick="showStage(6)" 
+                        class="btn-modern glass text-white px-8 py-3 rounded-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>Back
+                </button>
+                <div class="flex space-x-4">
+                    <button onclick="showIntro()" 
+                            class="btn-modern bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg">
+                        <i class="fas fa-home mr-2"></i>Start Over
+                    </button>
+                    <button onclick="showSummary()" 
+                            class="btn-modern bg-gradient-to-r from-yellow-600 to-red-600 text-white px-8 py-3 rounded-lg glow">
+                        <i class="fas fa-star mr-2"></i>View Summary
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Section -->
+    <div id="summary" class="stage min-h-screen flex items-center justify-center px-4 py-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 mb-6">
+                    <div class="w-8 h-8 bg-gradient-to-r from-gold-500 to-yellow-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-crown text-white text-sm"></i>
+                    </div>
+                    <span class="text-white font-semibold">Journey Complete</span>
+                </div>
+                <h2 class="text-4xl md:text-6xl font-bold text-white mb-6 glow-text">Mission Accomplished!</h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    You've successfully explored the complete LLM pipeline for Delta Capita's 
+                    Client Questionnaire Automation system. Here's what we've achieved together.
+                </p>
+            </div>
+
+            <!-- Journey Recap -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="glass rounded-2xl p-6 text-center metric-card" onclick="showStage(1)">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-database text-white text-xl"></i>
+                    </div>
+                    <div class="text-white font-bold text-lg mb-2">Data Collection</div>
+                    <div class="text-gray-300 text-sm">Building knowledge foundation</div>
+                </div>
+                <div class="glass rounded-2xl p-6 text-center metric-card" onclick="showStage(2)">
+                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-filter text-white text-xl"></i>
+                    </div>
+                    <div class="text-white font-bold text-lg mb-2">Preprocessing</div>
+                    <div class="text-gray-300 text-sm">Cleaning & structuring</div>
+                </div>
+                <div class="glass rounded-2xl p-6 text-center metric-card" onclick="showStage(3)">
+                    <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-puzzle-piece text-white text-xl"></i>
+                    </div>
+                    <div class="text-white font-bold text-lg mb-2">Tokenization</div>
+                    <div class="text-gray-300 text-sm">Breaking into tokens</div>
+                </div>
+                <div class="glass rounded-2xl p-6 text-center metric-card" onclick="showStage(4)">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-vector-square text-white text-xl"></i>
+                    </div>
+                    <div class="text-white font-bold text-lg mb-2">Vectorization</div>
+                    <div class="text-gray-300 text-sm">Converting to vectors</div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <div class="glass rounded-2xl p-6 text-center metric-card" onclick="showStage(5)">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-search-plus text-white text-xl"></i>
+                    </div>
+                    <div class="text-white font-bold text-lg mb-2">RAG Retrieval</div>
+                    <div class="text-gray-300 text-sm">Intelligent document search</div>
+                </div>
+                <div class="glass rounded-2xl p-6 text-center metric-card" onclick="showStage(6)">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-pen-fancy text-white text-xl"></i>
+                    </div>
+                    <div class="text-white font-bold text-lg mb-2">Response Generation</div>
+                    <div class="text-gray-300 text-sm">Crafting intelligent answers</div>
+                </div>
+                <div class="glass rounded-2xl p-6 text-center metric-card" onclick="showStage(7)">
+                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-rocket text-white text-xl"></i>
+                    </div>
+                    <div class="text-white font-bold text-lg mb-2">Optimization</div>
+                    <div class="text-gray-300 text-sm">Continuous improvement</div>
+                </div>
+            </div>
+
+            <!-- Key Takeaways -->
+            <div class="glass rounded-2xl p-8 mb-12">
+                <h3 class="text-3xl font-bold text-white mb-8 text-center flex items-center justify-center">
+                    <i class="fas fa-key text-yellow-400 mr-3"></i>Key Takeaways
+                </h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-brain text-white"></i>
+                            </div>
+                            <div>
+                                <div class="text-white font-bold text-lg mb-2">AI-Powered Efficiency</div>
+                                <div class="text-gray-300">Our LLM pipeline reduces manual effort by 80% while maintaining 95% accuracy in responses.</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-sync-alt text-white"></i>
+                            </div>
+                            <div>
+                                <div class="text-white font-bold text-lg mb-2">RAG Advantage</div>
+                                <div class="text-gray-300">Dynamic document retrieval without expensive model retraining, perfect for evolving compliance requirements.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-chart-line text-white"></i>
+                            </div>
+                            <div>
+                                <div class="text-white font-bold text-lg mb-2">Scalable Solution</div>
+                                <div class="text-gray-300">Proven PoC success enables expansion to other Delta Capita products and services.</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-shield-alt text-white"></i>
+                            </div>
+                            <div>
+                                <div class="text-white font-bold text-lg mb-2">Compliance Ready</div>
+                                <div class="text-gray-300">Built-in quality checks and consistent formatting ensure regulatory compliance standards.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA Section -->
+            <div class="text-center">
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-4">Ready to Transform Your Business?</h3>
+                    <p class="text-gray-300 mb-6 max-w-2xl mx-auto">
+                        Experience the power of AI-driven automation in your client questionnaire processes. 
+                        Contact our team to discuss implementation and customization for your specific needs.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button onclick="startJourney()" 
+                                class="btn-modern bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg">
+                            <i class="fas fa-redo mr-2"></i>Explore Again
+                        </button>
+                        <button onclick="showStage(1)" 
+                                class="btn-modern glass text-white px-8 py-3 rounded-lg">
+                            <i class="fas fa-play mr-2"></i>Try Interactive Demo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStageNum = 0;
+        let currentQuery = "What is your latest DR test report?";
+        
+        // Initialize particles
+        function createParticles() {
+            const container = document.querySelector('.bg-animation');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'floating-particles';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // Generate navigation pills
+        function generateNavigation() {
+            const nav = document.getElementById('stageNav');
+            const stages = [
+                { num: 1, name: 'Data', icon: 'database' },
+                { num: 2, name: 'Clean', icon: 'filter' },
+                { num: 3, name: 'Token', icon: 'puzzle-piece' },
+                { num: 4, name: 'Vector', icon: 'vector-square' },
+                { num: 5, name: 'RAG', icon: 'search-plus' },
+                { num: 6, name: 'Generate', icon: 'pen-fancy' },
+                { num: 7, name: 'Optimize', icon: 'rocket' }
+            ];
+
+            stages.forEach(stage => {
+                const pill = document.createElement('div');
+                pill.className = 'nav-pill glass px-3 py-2 rounded-full text-xs text-white flex items-center space-x-2';
+                pill.onclick = () => showStage(stage.num);
+                pill.innerHTML = `
+                    <i class="fas fa-${stage.icon}"></i>
+                    <span class="hidden sm:inline">${stage.name}</span>
+                `;
+                nav.appendChild(pill);
+            });
+        }
+
+        // Update progress ring
+        function updateProgress(stage) {
+            const progress = (stage / 7) * 100;
+            const circumference = 251.2;
+            const offset = circumference - (progress / 100) * circumference;
+            document.getElementById('progressRing').style.strokeDashoffset = offset;
+            document.getElementById('currentStage').textContent = stage;
+            
+            // Update nav pills
+            document.querySelectorAll('.nav-pill').forEach((pill, index) => {
+                pill.classList.toggle('active', index + 1 === stage);
+            });
+        }
+
+        // Show intro
+        function showIntro() {
+            document.querySelectorAll('.stage').forEach(stage => {
+                stage.classList.remove('active');
+            });
+            document.getElementById('intro').style.display = 'flex';
+            currentStageNum = 0;
+            updateProgress(0);
+        }
+
+        // Start journey
+        function startJourney() {
+            showStage(1);
+        }
+
+        // Show stage
+        function showStage(stageNumber) {
+            document.querySelectorAll('.stage').forEach(stage => {
+                stage.classList.remove('active');
+            });
+            document.getElementById('intro').style.display = 'none';
+            
+            setTimeout(() => {
+                document.getElementById(`stage${stageNumber}`).classList.add('active');
+                currentStageNum = stageNumber;
+                updateProgress(stageNumber);
+                
+                // Execute stage-specific animations
+                executeStageAnimations(stageNumber);
+            }, 100);
+        }
+
+        // Show summary
+        function showSummary() {
+            document.querySelectorAll('.stage').forEach(stage => {
+                stage.classList.remove('active');
+            });
+            document.getElementById('intro').style.display = 'none';
+            
+            setTimeout(() => {
+                document.getElementById('summary').classList.add('active');
+                currentStageNum = 8;
+                updateProgress(7);
+            }, 100);
+        }
+
+        // Execute stage-specific animations
+        function executeStageAnimations(stage) {
+            switch(stage) {
+                case 2:
+                    animatePreprocessing();
+                    break;
+                case 3:
+                    animateTokenization();
+                    break;
+                case 4:
+                    animateVectorization();
+                    break;
+                case 5:
+                    animateRetrieval();
+                    break;
+                case 6:
+                    animateResponseGeneration();
+                    break;
+            }
+        }
+
+        // Sample queries functionality
+        function showSampleQueries() {
+            const samples = document.getElementById('sampleQueries');
+            samples.classList.toggle('hidden');
+        }
+
+        function setQuery(query) {
+            document.getElementById('queryInput').value = query;
+            currentQuery = query;
+            document.getElementById('sampleQueries').classList.add('hidden');
+        }
+
+        // Process query
+        function processQuery() {
+            const queryInput = document.getElementById('queryInput');
+            currentQuery = queryInput.value || currentQuery;
+            
+            // Update displays across stages
+            document.getElementById('originalQuery').textContent = currentQuery;
+            
+            // Trigger preprocessing animation
+            setTimeout(() => animatePreprocessing(), 500);
+        }
+
+        // Preprocessing animation
+        function animatePreprocessing() {
+            const rawText = document.getElementById('rawText');
+            const cleanedText = document.getElementById('cleanedText');
+            const processingAnim = document.getElementById('processingAnimation');
+            const metadataTags = document.getElementById('metadataTags');
+            
+            // Show raw text with noise
+            rawText.innerHTML = `
+                <span style="text-decoration: line-through; color: #ef4444;">## CONFIDENTIAL ##</span><br>
+                ${currentQuery}<br>
+                <span style="text-decoration: line-through; color: #ef4444;">[Extra whitespace and formatting]</span><br>
+                <span style="text-decoration: line-through; color: #ef4444;">%%%METADATA%%%</span>
+            `;
+            
+            // Show processing
+            processingAnim.style.display = 'flex';
+            
+            setTimeout(() => {
+                processingAnim.style.display = 'none';
+                
+                // Show cleaned text
+                const cleaned = currentQuery.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+                cleanedText.innerHTML = `
+                    <span style="color: #10b981;">${cleaned}</span><br>
+                    <span style="color: #8b5cf6; font-size: 0.8em;">+ Metadata: [type: query, timestamp: ${new Date().toISOString()}, language: en]</span>
+                `;
+                
+                // Generate metadata tags
+                const tags = ['security-query', 'dr-testing', 'compliance', 'document-request', 'high-priority'];
+                metadataTags.innerHTML = tags.map(tag => 
+                    `<span class="token" style="animation-delay: ${Math.random() * 0.5}s">${tag}</span>`
+                ).join('');
+            }, 2000);
+        }
+
+        // Tokenization animation
+        function animateTokenization() {
+            const tokenContainer = document.getElementById('tokenContainer');
+            const originalQuery = document.getElementById('originalQuery');
+            originalQuery.textContent = currentQuery;
+            
+            const tokens = currentQuery.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(' ').filter(t => t);
+            tokenContainer.innerHTML = '';
+            
+            // Update metrics
+            document.getElementById('tokenCount').textContent = tokens.length;
+            document.getElementById('uniqueTokens').textContent = new Set(tokens).size;
+            document.getElementById('avgTokenLength').textContent = (tokens.reduce((sum, t) => sum + t.length, 0) / tokens.length).toFixed(1);
+            
+            // Animate tokens
+            tokens.forEach((token, index) => {
+                setTimeout(() => {
+                    const tokenEl = document.createElement('span');
+                    tokenEl.className = 'token';
+                    tokenEl.textContent = token;
+                    tokenEl.style.animationDelay = '0s';
+                    tokenContainer.appendChild(tokenEl);
+                }, index * 300);
+            });
+        }
+
+        // Vectorization animation
+        function animateVectorization() {
+            const vectorSpace = document.getElementById('vectorSpace');
+            const queryVector = document.getElementById('queryVector');
+            const docVector = document.getElementById('docVector');
+            const similarityScore = document.getElementById('similarityScore');
+            const similarityBar = document.getElementById('similarityBar');
+            
+            // Clear previous points
+            vectorSpace.innerHTML = '';
+            
+            // Add vector points
+            const points = 20;
+            for (let i = 0; i < points; i++) {
+                const point = document.createElement('div');
+                point.className = 'vector-point';
+                point.style.left = Math.random() * 90 + '%';
+                point.style.top = Math.random() * 90 + '%';
+                point.style.animationDelay = Math.random() * 2 + 's';
+                vectorSpace.appendChild(point);
+            }
+            
+            // Animate vector values
+            setTimeout(() => {
+                queryVector.textContent = '[0.234, -0.567, 0.891, 0.123, -0.445, 0.678, -0.234]';
+                docVector.textContent = '[0.198, -0.523, 0.834, 0.156, -0.398, 0.721, -0.189]';
+                
+                // Animate similarity score
+                let score = 0;
+                const targetScore = 0.87;
+                const interval = setInterval(() => {
+                    score += 0.01;
+                    similarityScore.textContent = score.toFixed(2);
+                    similarityBar.style.width = (score * 100) + '%';
+                    
+                    if (score >= targetScore) {
+                        clearInterval(interval);
+                        similarityScore.textContent = targetScore.toFixed(2);
+                        similarityBar.style.width = '87%';
+                    }
+                }, 50);
+            }, 1000);
+        }
+
+        // Retrieval animation
+        function animateRetrieval() {
+            const retrievedDocs = document.getElementById('retrievedDocs');
+            
+            const docs = [
+                { title: 'DR Test Report - June 2025', score: 0.94, type: 'report', icon: 'chart-line' },
+                { title: 'Business Continuity Policy', score: 0.87, type: 'policy', icon: 'shield-alt' },
+                { title: 'Infrastructure Recovery Plan', score: 0.82, type: 'procedure', icon: 'server' }
+            ];
+            
+            retrievedDocs.innerHTML = '';
+            
+            docs.forEach((doc, index) => {
+                setTimeout(() => {
+                    const docEl = document.createElement('div');
+                    docEl.className = 'flex items-center justify-between p-4 glass-dark rounded-lg transform transition-all duration-500 hover:scale-105';
+                    docEl.innerHTML = `
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-${doc.icon} text-white"></i>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">${doc.title}</div>
+                                <div class="text-gray-300 text-sm capitalize">${doc.type} • Relevance: ${(doc.score * 100).toFixed(0)}%</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-16 bg-gray-700 rounded-full h-2">
+                                <div class="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-1000" 
+                                     style="width: ${doc.score * 100}%"></div>
+                            </div>
+                            <div class="text-white font-bold">${(doc.score * 100).toFixed(0)}%</div>
+                        </div>
+                    `;
+                    retrievedDocs.appendChild(docEl);
+                }, index * 500);
+            });
+        }
+
+        // Response generation animation
+        function animateResponseGeneration() {
+            const responseEl = document.querySelector('.typewriter-response');
+            const response = "Our latest DR test report, dated June 2025, confirms full compliance with industry standards. The test successfully validated our recovery time objective (RTO) of 4 hours and recovery point objective (RPO) of 1 hour. All critical systems were restored within the specified timeframes, and no data loss occurred during the simulation.";
+            
+            responseEl.innerHTML = '';
+            
+            let i = 0;
+            const typeInterval = setInterval(() => {
+                if (i < response.length) {
+                    responseEl.innerHTML += response.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typeInterval);
+                }
+            }, 30);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            generateNavigation();
+            updateProgress(0);
+            
+            // Add keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowRight' && currentStageNum < 7) {
+                    showStage(currentStageNum + 1);
+                } else if (e.key === 'ArrowLeft' && currentStageNum > 1) {
+                    showStage(currentStageNum - 1);
+                } else if (e.key === 'Home') {
+                    showIntro();
+                }
+            });
+            
+            // Add click handlers for metric cards
+            document.querySelectorAll('.metric-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html> 
